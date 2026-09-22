@@ -1,4 +1,4 @@
-# @betterimage/og
+# @betterimage/cards
 
 Signed [betterimage.io](https://betterimage.io) card URLs, so every page on your site gets its own social card from one saved template.
 
@@ -11,13 +11,13 @@ Zero dependencies. Runs on Node 18+, Bun, Deno and edge runtimes (Vercel Edge, C
 ## Install
 
 ```bash
-npm install @betterimage/og
+npm install @betterimage/cards
 ```
 
 ## Use
 
 ```ts
-import { parseApiKey, signedImageUrl } from "@betterimage/og";
+import { parseApiKey, signedImageUrl } from "@betterimage/cards";
 
 const { keyId, secret } = parseApiKey(process.env.BETTERIMAGE_API_KEY!);
 
@@ -36,7 +36,7 @@ You need an API key from [account settings](https://betterimage.io/users/setting
 
 ```ts
 // app/blog/[slug]/page.tsx
-import { metaTags, parseApiKey, signedImageUrl } from "@betterimage/og";
+import { metaTags, parseApiKey, signedImageUrl } from "@betterimage/cards";
 
 export async function generateMetadata({ params }) {
   const post = await getPost(params.slug);
@@ -59,7 +59,7 @@ export async function generateMetadata({ params }) {
 
 ```astro
 ---
-import { parseApiKey, signedImageUrl, metaTagsHtml } from "@betterimage/og";
+import { parseApiKey, signedImageUrl, metaTagsHtml } from "@betterimage/cards";
 
 const url = await signedImageUrl({
   ...parseApiKey(import.meta.env.BETTERIMAGE_API_KEY),
@@ -73,7 +73,7 @@ const url = await signedImageUrl({
 ### Sizes other than the link preview
 
 ```ts
-import { signedImage } from "@betterimage/og";
+import { signedImage } from "@betterimage/cards";
 
 const thumb = await signedImage({
   ...parseApiKey(process.env.BETTERIMAGE_API_KEY!),

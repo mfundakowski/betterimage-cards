@@ -1,5 +1,5 @@
 {
-  "name": "@betterimage/og",
+  "name": "@betterimage/cards",
   "version": "1.0.0",
   "description": "Signed betterimage.io card URLs: one template renders a social card per page at any platform size (1200x630 link preview, YouTube thumbnail, Instagram square or portrait, story, Pinterest pin).",
   "keywords": [
@@ -42,6 +42,10 @@
     "node": ">=18"
   },
   "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean --target node18",
     "test": "npm run build && node --test \"test/**/*.test.mjs\"",
