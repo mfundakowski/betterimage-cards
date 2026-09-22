@@ -10,5 +10,6 @@ First release.
   `pinterest`) and `scale` 1 or 2, both part of the signature.
 - `metaTags` and `metaTagsHtml` for the head block.
 - `parseApiKey`, `canonicalString` and `sign` for wiring and debugging.
-- Zero runtime dependencies; Web Crypto, so Node 18+, Bun, Deno and edge
-  runtimes all work.
+- Zero runtime dependencies; Web Crypto, so Node 20+, Bun, Deno and edge
+  runtimes all work. Node 18 is out of support and its test runner does not
+  expose the Web Crypto global, so the floor is 20.

@@ -13,8 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # The floor the package claims in engines, plus current.
-        node: [18, 22]
+        # The floor the package claims in engines, the current LTS, and the
+        # current release.
+        node: [20, 24, 26]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

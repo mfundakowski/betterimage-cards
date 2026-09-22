@@ -39,7 +39,7 @@
     "LICENSE"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "sideEffects": false,
   "publishConfig": {
@@ -47,12 +47,12 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean --target node18",
-    "test": "npm run build && node --test \"test/**/*.test.mjs\"",
+    "build": "tsup src/index.ts --format esm,cjs --clean --target node20 && tsc --emitDeclarationOnly --declaration --outDir dist && cp dist/index.d.ts dist/index.d.cts",
+    "test": "npm run build && node --test test/*.test.mjs",
     "prepublishOnly": "npm test"
   },
   "devDependencies": {
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2"
+    "tsup": "^8.5.1",
+    "typescript": "^7.0.2"
   }
 }

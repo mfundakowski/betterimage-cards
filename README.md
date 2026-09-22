@@ -6,7 +6,7 @@ You design the card once and the image is rendered the first time it is fetched,
 
 The same template renders at every platform size: a 1200x630 link preview for `og:image`, a YouTube thumbnail, an Instagram square or portrait, a story, or a Pinterest pin.
 
-Zero dependencies. Runs on Node 18+, Bun, Deno and edge runtimes (Vercel Edge, Cloudflare Workers); the signature uses Web Crypto.
+Zero dependencies. Runs on Node 20+, Bun, Deno and edge runtimes (Vercel Edge, Cloudflare Workers); the signature uses Web Crypto, so there is no `node:crypto` import to break a bundler.
 
 ## Install
 
