@@ -3,11 +3,14 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 
 import {
+  SIZES,
   canonicalString,
+  dimensions,
   metaTags,
   metaTagsHtml,
   parseApiKey,
   sign,
+  signedImage,
   signedImageUrl,
 } from "../dist/index.js";
 
@@ -95,6 +98,59 @@ test("signedImageUrl refuses incomplete input", async () => {
   await assert.rejects(() => signedImageUrl({ keyId: KEY_ID, secret: SECRET, template: "" }), TypeError);
 });
 
+test("every platform size is offered and scale doubles the pixels", () => {
+  assert.deepEqual(Object.keys(SIZES), ["og", "youtube", "square", "portrait", "story", "pinterest"]);
+  assert.deepEqual(dimensions(), { width: 1200, height: 630 });
+  assert.deepEqual(dimensions("story"), { width: 1080, height: 1920 });
+  assert.deepEqual(dimensions("og", 2), { width: 2400, height: 1260 });
+});
+
+test("size and scale are signed fields, not free query parameters", async () => {
+  const image = await signedImage({
+    keyId: KEY_ID,
+    secret: SECRET,
+    template: "card",
+    fields: { title: "T" },
+    size: "story",
+    scale: 2,
+  });
+
+  assert.deepEqual(image, {
+    url: image.url,
+    size: "story",
+    scale: 2,
+    width: 2160,
+    height: 3840,
+  });
+
+  const parsed = new URL(image.url);
+  assert.equal(parsed.searchParams.get("size"), "story");
+  assert.equal(parsed.searchParams.get("scale"), "2");
+  assert.equal(
+    parsed.searchParams.get("s"),
+    await sign(SECRET, canonicalString(KEY_ID, "card", { title: "T", size: "story", scale: 2 })),
+  );
+});
+
+test("the default size stays out of the URL so it matches a hand-built one", async () => {
+  const url = await signedImageUrl({ keyId: KEY_ID, secret: SECRET, template: "card", fields: { title: "T" } });
+  const parsed = new URL(url);
+
+  assert.equal(parsed.searchParams.get("size"), null);
+  assert.equal(parsed.searchParams.get("scale"), null);
+});
+
+test("an unknown size or scale is refused before the request is made", async () => {
+  await assert.rejects(
+    () => signedImage({ keyId: KEY_ID, secret: SECRET, template: "card", size: "banner" }),
+    /Unknown size "banner"/,
+  );
+  await assert.rejects(
+    () => signedImage({ keyId: KEY_ID, secret: SECRET, template: "card", scale: 3 }),
+    /scale must be 1 or 2/,
+  );
+});
+
 test("metaTags cover og:image and the Twitter pair", () => {
   const tags = metaTags("https://betterimage.io/card.png");
 
@@ -104,4 +160,12 @@ test("metaTags cover og:image and the Twitter pair", () => {
   );
 
   assert.match(metaTagsHtml('https://x.test/c.png?a=1&b="2"'), /content="https:\/\/x.test\/c.png\?a=1&amp;b=&quot;2&quot;"/);
+
+  // a bare URL is treated as the default link-preview size
+  assert.equal(tags[1].content, "1200");
+  assert.equal(tags[2].content, "630");
+
+  const story = metaTags({ url: "https://x.test/s.png", size: "story", scale: 1, width: 1080, height: 1920 });
+  assert.equal(story[1].content, "1080");
+  assert.equal(story[2].content, "1920");
 });

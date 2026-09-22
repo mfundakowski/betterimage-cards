@@ -1,7 +1,7 @@
 {
   "name": "@betterimage/og",
   "version": "1.0.0",
-  "description": "Build signed betterimage.io og:image URLs: one template renders a social card per page, with nothing to run on your side.",
+  "description": "Signed betterimage.io card URLs: one template renders a social card per page at any platform size (1200x630 link preview, YouTube thumbnail, Instagram square or portrait, story, Pinterest pin).",
   "keywords": [
     "og-image",
     "open-graph",
@@ -9,9 +9,12 @@
     "link-preview",
     "meta-tags",
     "twitter-card",
+    "youtube-thumbnail",
+    "instagram",
+    "social-media-images",
     "betterimage"
   ],
-  "homepage": "https://betterimage.io/dynamic-og-images",
+  "homepage": "https://betterimage.io/api",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mfundakowski/betterimage-og.git"

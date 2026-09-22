@@ -1,8 +1,10 @@
 # @betterimage/og
 
-Signed [betterimage.io](https://betterimage.io) image URLs, so every page on your site gets its own social card from one saved template.
+Signed [betterimage.io](https://betterimage.io) card URLs, so every page on your site gets its own social card from one saved template.
 
-You design the card once, put a URL in the `og:image` tag, and the image is rendered the first time a crawler fetches it, then cached at the edge. There is no image pipeline to build, nothing to upload on every post, and the API key's secret never leaves your server.
+You design the card once and the image is rendered the first time it is fetched, then cached at the edge. There is no image pipeline to build, nothing to upload on every post, and the API key's secret never leaves your server.
+
+The same template renders at every platform size: a 1200x630 link preview for `og:image`, a YouTube thumbnail, an Instagram square or portrait, a story, or a Pinterest pin.
 
 Zero dependencies. Runs on Node 18+, Bun, Deno and edge runtimes (Vercel Edge, Cloudflare Workers); the signature uses Web Crypto.
 
@@ -68,6 +70,36 @@ const url = await signedImageUrl({
 <Fragment set:html={metaTagsHtml(url)} />
 ```
 
+### Sizes other than the link preview
+
+```ts
+import { signedImage } from "@betterimage/og";
+
+const thumb = await signedImage({
+  ...parseApiKey(process.env.BETTERIMAGE_API_KEY!),
+  template: "blog-card",
+  fields: { title: episode.title },
+  size: "youtube",   // og | youtube | square | portrait | story | pinterest
+  scale: 2,          // 2 renders at twice the pixels for high-DPI screens
+});
+
+thumb.url;                      // the signed URL
+thumb.width, thumb.height;      // 2560 x 1440 at scale 2
+```
+
+`signedImage` returns the pixels the image renders at, which is what `og:image:width` and `og:image:height` need; `metaTags(thumb)` uses them. `SIZES` holds the full table and `dimensions(size, scale)` computes one without signing anything.
+
+| Size | Pixels | Where it goes |
+|---|---|---|
+| `og` (default) | 1200x630 | Link previews: X, Facebook, LinkedIn, Slack, Discord, WhatsApp |
+| `youtube` | 1280x720 | YouTube thumbnails and any 16:9 slot |
+| `square` | 1080x1080 | Instagram and Facebook feed posts |
+| `portrait` | 1080x1350 | Instagram portrait posts (4:5) |
+| `story` | 1080x1920 | Instagram, Facebook and TikTok stories (9:16) |
+| `pinterest` | 1000x1500 | Pinterest pins (2:3) |
+
+`size` and `scale` are part of the signature, so a published URL cannot be edited to render a different canvas on your quota.
+
 ### Anything else
 
 `metaTags(url)` returns the five tags as objects, `metaTagsHtml(url)` as a string:
@@ -84,7 +116,9 @@ const url = await signedImageUrl({
 
 | Export | What it does |
 |---|---|
-| `signedImageUrl(options)` | The signed URL for one page. `{ keyId, secret, template, fields?, baseUrl? }` |
+| `signedImageUrl(options)` | The signed URL for one page. `{ keyId, secret, template, fields?, size?, scale?, baseUrl? }` |
+| `signedImage(options)` | The same, plus `width`, `height`, `size` and `scale` |
+| `SIZES` / `dimensions(size, scale)` | The platform sizes and the pixels each renders at |
 | `parseApiKey(apiKey)` | Splits `bi_<keyId>_<secret>` into `{ keyId, secret }` |
 | `canonicalString(keyId, template, fields)` | The exact string that gets signed, for debugging a 403 |
 | `sign(secret, canonical)` | Lowercase hex HMAC-SHA256 |

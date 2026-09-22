@@ -1,10 +1,12 @@
 /**
- * Signed og:image URLs for betterimage.io.
+ * Signed betterimage.io card URLs.
  *
- * One saved template renders a card per page: you put a URL in the
- * og:image tag and the image is rendered when a crawler first fetches it,
- * then cached at the edge. Nothing runs on your side, and the API key's
- * secret never leaves your server.
+ * One saved template renders a card per page, at any of the six platform
+ * sizes: a 1200x630 link preview for og:image, a YouTube thumbnail, an
+ * Instagram square or portrait, a story, or a Pinterest pin. The image is
+ * rendered the first time it is fetched and then cached at the edge, so
+ * nothing runs on your side and the API key's secret never leaves your
+ * server.
  *
  * The signature is an HMAC-SHA256 over a canonical string the server
  * rebuilds from the request, so the fields in the URL are the fields you
@@ -12,6 +14,32 @@
  */
 
 const DEFAULT_BASE_URL = "https://betterimage.io";
+
+/** The sizes a template renders at, with the pixels each one produces at scale 1. */
+export const SIZES = {
+  og: { width: 1200, height: 630, label: "Open Graph" },
+  youtube: { width: 1280, height: 720, label: "YouTube thumbnail" },
+  square: { width: 1080, height: 1080, label: "Square post" },
+  portrait: { width: 1080, height: 1350, label: "Portrait post" },
+  story: { width: 1080, height: 1920, label: "Story" },
+  pinterest: { width: 1000, height: 1500, label: "Pinterest pin" },
+} as const satisfies Record<string, { width: number; height: number; label: string }>;
+
+export type CardSize = keyof typeof SIZES;
+
+/** 2 renders at twice the pixel size for high-DPI screens. */
+export type Scale = 1 | 2;
+
+export interface Dimensions {
+  width: number;
+  height: number;
+}
+
+/** The pixels a size renders at, doubled when scale is 2. */
+export function dimensions(size: CardSize = "og", scale: Scale = 1): Dimensions {
+  const base = SIZES[size];
+  return { width: base.width * scale, height: base.height * scale };
+}
 
 /** Text drawn on the card. Which names a template accepts comes from the template itself. */
 export type Fields = Record<string, string | number | boolean | null | undefined>;
@@ -25,8 +53,19 @@ export interface SignOptions {
   template: string;
   /** Field values for this page. Empty and nullish values are dropped. */
   fields?: Fields;
+  /** Which platform size to render. Defaults to `og` (1200x630). */
+  size?: CardSize;
+  /** 2 for a high-DPI render at twice the pixels. Defaults to 1. */
+  scale?: Scale;
   /** Override for self-hosted or staging deployments. */
   baseUrl?: string;
+}
+
+export interface SignedImage extends Dimensions {
+  /** The URL to put in the tag. */
+  url: string;
+  size: CardSize;
+  scale: Scale;
 }
 
 export interface ApiKeyParts {
@@ -101,7 +140,17 @@ export async function sign(secret: string, canonical: string): Promise<string> {
  * ```
  */
 export async function signedImageUrl(options: SignOptions): Promise<string> {
+  return (await signedImage(options)).url;
+}
+
+/**
+ * The same URL plus the pixels it renders at, which is what the
+ * og:image:width and og:image:height tags need.
+ */
+export async function signedImage(options: SignOptions): Promise<SignedImage> {
   const { keyId, secret, template, fields = {}, baseUrl = DEFAULT_BASE_URL } = options;
+  const size = options.size ?? "og";
+  const scale = options.scale ?? 1;
 
   if (!keyId || !secret) {
     throw new TypeError("signedImageUrl needs both keyId and secret (see parseApiKey).");
@@ -111,15 +160,30 @@ export async function signedImageUrl(options: SignOptions): Promise<string> {
     throw new TypeError("signedImageUrl needs a template slug (GET /api/v1/templates lists them).");
   }
 
-  const pairs = normalizeFields(fields);
-  const signature = await sign(secret, canonicalString(keyId, template, fields));
+  if (!(size in SIZES)) {
+    throw new TypeError(`Unknown size "${size}". Valid sizes: ${Object.keys(SIZES).join(", ")}.`);
+  }
+
+  if (scale !== 1 && scale !== 2) {
+    throw new TypeError("scale must be 1 or 2.");
+  }
+
+  // size and scale travel as ordinary signed fields, so a URL cannot be
+  // edited afterwards to render a different canvas on your quota.
+  const signedFields: Fields = { ...fields };
+  if (options.size) signedFields["size"] = size;
+  if (options.scale) signedFields["scale"] = scale;
+
+  const signature = await sign(secret, canonicalString(keyId, template, signedFields));
 
   // URLSearchParams uses the same form encoding the server decodes with, so
   // a literal plus in the text survives as %2B rather than becoming a space.
-  const query = new URLSearchParams(pairs);
+  const query = new URLSearchParams(normalizeFields(signedFields));
   query.set("s", signature);
 
-  return `${trimSlash(baseUrl)}/api/v1/i/${encodeURIComponent(keyId)}/${encodeURIComponent(template)}.png?${query}`;
+  const url = `${trimSlash(baseUrl)}/api/v1/i/${encodeURIComponent(keyId)}/${encodeURIComponent(template)}.png?${query}`;
+
+  return { url, size, scale, ...dimensions(size, scale) };
 }
 
 export interface MetaTag {
@@ -130,22 +194,29 @@ export interface MetaTag {
 
 /**
  * The tags that make the image render as a full-width card everywhere:
- * og:image with its declared size, and the Twitter pair X needs to show a
- * card at all. Width and height are the size this endpoint renders.
+ * og:image with its declared pixels, and the Twitter pair X needs to show
+ * a card at all.
+ *
+ * Pass the result of `signedImage` to get the right width and height for
+ * a non-default size; a bare URL is assumed to be a 1200x630 link preview,
+ * which is the only size link previews use.
  */
-export function metaTags(url: string): MetaTag[] {
+export function metaTags(image: string | SignedImage): MetaTag[] {
+  const url = typeof image === "string" ? image : image.url;
+  const { width, height } = typeof image === "string" ? dimensions("og") : image;
+
   return [
     { property: "og:image", content: url },
-    { property: "og:image:width", content: "1200" },
-    { property: "og:image:height", content: "630" },
+    { property: "og:image:width", content: String(width) },
+    { property: "og:image:height", content: String(height) },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:image", content: url },
   ];
 }
 
 /** The same tags as HTML, for templates that take a string. */
-export function metaTagsHtml(url: string): string {
-  return metaTags(url)
+export function metaTagsHtml(image: string | SignedImage): string {
+  return metaTags(image)
     .map((tag) => {
       const attribute = tag.property ? `property="${tag.property}"` : `name="${tag.name}"`;
       return `<meta ${attribute} content="${escapeAttribute(tag.content)}" />`;
