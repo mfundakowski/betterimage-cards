@@ -17,9 +17,9 @@
   "homepage": "https://betterimage.io/api",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mfundakowski/betterimage-og.git"
+    "url": "git+https://github.com/mfundakowski/betterimage-cards.git"
   },
-  "bugs": "https://github.com/mfundakowski/betterimage-og/issues",
+  "bugs": "https://github.com/mfundakowski/betterimage-cards/issues",
   "license": "MIT",
   "author": "Mateusz Fundakowski",
   "type": "module",
