@@ -27,5 +27,6 @@ need different text, sign a different URL.
 ## Supply chain
 
 The package has no runtime dependencies. Releases are published from GitHub
-Actions with npm provenance, so the tarball on npm carries an attestation
-tying it to this repository and the commit it was built from.
+Actions through npm trusted publishing (OIDC), so no npm token exists to
+leak, and with npm provenance, so the tarball carries an attestation tying
+it to this repository and the commit it was built from.

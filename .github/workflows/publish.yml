@@ -3,6 +3,12 @@ name: publish
 # Publishes the version in package.json when a GitHub release is created.
 # `--provenance` attaches a signed attestation tying the tarball to this
 # repository and commit, which npm shows on the package page.
+#
+# Auth is npm trusted publishing: the package names this repository and
+# this workflow file as its publisher, and the OIDC token below proves the
+# run really is that workflow, so no npm token has to exist anywhere. The
+# runner image ships an npm too old to exchange that token, hence the
+# upgrade step.
 
 on:
   release:
@@ -22,8 +28,7 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
           cache: npm
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm test
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
