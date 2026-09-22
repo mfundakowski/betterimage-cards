@@ -1,0 +1,51 @@
+{
+  "name": "@betterimage/og",
+  "version": "1.0.0",
+  "description": "Build signed betterimage.io og:image URLs: one template renders a social card per page, with nothing to run on your side.",
+  "keywords": [
+    "og-image",
+    "open-graph",
+    "social-card",
+    "link-preview",
+    "meta-tags",
+    "twitter-card",
+    "betterimage"
+  ],
+  "homepage": "https://betterimage.io/dynamic-og-images",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mfundakowski/betterimage-og.git"
+  },
+  "bugs": "https://github.com/mfundakowski/betterimage-og/issues",
+  "license": "MIT",
+  "author": "Mateusz Fundakowski",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --target node18",
+    "test": "npm run build && node --test \"test/**/*.test.mjs\"",
+    "prepublishOnly": "npm test"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  }
+}
