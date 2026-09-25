@@ -70,6 +70,37 @@ const url = await signedImageUrl({
 <Fragment set:html={metaTagsHtml(url)} />
 ```
 
+### A different picture per item
+
+`fields` carries the text, and it carries the card's pictures too. Pass
+`image_url` and that photo is fetched server-side and drawn in the slot the
+saved design already lays out, keeping its crop framing, so a catalogue
+comes out as one series instead of one card per shape.
+
+```ts
+const url = await signedImageUrl({
+  keyId,
+  secret,
+  template: "shop-listing",
+  fields: {
+    title: product.name,
+    price: product.price,
+    price_was: product.compareAtPrice,
+    badge: product.discountLabel,
+    image_url: product.image,
+  },
+});
+```
+
+`image2_url`, `logo_url` and `background_url` fill the card's other slots
+the same way. PNG, JPEG or WebP up to 5 MB, decided by the bytes rather
+than the URL. Which slots a template actually draws is in the
+`image_fields` of `GET /api/v1/templates`.
+
+Nothing is uploaded and nothing is rendered here: the URL is signed
+locally, so a catalogue of any size costs no API calls until something
+fetches the image.
+
 ### Sizes other than the link preview
 
 ```ts
@@ -125,6 +156,8 @@ thumb.width, thumb.height;      // 2560 x 1440 at scale 2
 | `metaTags(url)` / `metaTagsHtml(url)` | The tags to put in `<head>` |
 
 Field values that are `undefined`, `null` or `""` are dropped, numbers and booleans are stringified, and the order of keys in the object never changes the signature.
+
+`fields` takes the text a card draws (`title`, `description`, `tag`, `author`, `footer`, and on a Product card `rating`, `price`, `price_was`, `price_note`, `badge`) and its pictures by URL (`image_url`, `image2_url`, `logo_url`, `background_url`). `GET /api/v1/templates` lists what each saved template accepts.
 
 ## How the signature works
 

@@ -1,6 +1,6 @@
 {
   "name": "@betterimage/cards",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Signed betterimage.io card URLs: one template renders a social card per page at any platform size (1200x630 link preview, YouTube thumbnail, Instagram square or portrait, story, Pinterest pin).",
   "keywords": [
     "og-image",

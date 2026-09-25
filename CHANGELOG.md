@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.1
+
+Documentation only; no code change and no change to the signature.
+
+- `fields` now documents what it accepts, which it never did: the text a
+  card draws, and the card's pictures by URL (`image_url`, `image2_url`,
+  `logo_url`, `background_url`). The picture fields shipped on the API
+  while this README still implied `fields` was text.
+- A worked example of the case they exist for: one saved design and a
+  different photo per product, signed locally, so a catalogue of any size
+  costs no API calls until something fetches an image.
+
 ## 1.0.0
 
 First release.
